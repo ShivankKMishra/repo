@@ -76,40 +76,58 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
+    console.log("Registration request received:", req.body);
     try {
       // Validate the input
+      console.log("Validating user input with schema");
       const userInput = insertUserSchema.parse(req.body);
+      console.log("Input validation passed:", userInput);
       
       // Check if username already exists
+      console.log("Checking if username exists:", userInput.username);
       const existingUsername = await storage.getUserByUsername(userInput.username);
       if (existingUsername) {
+        console.log("Username already exists");
         return res.status(400).json({ message: "Username already exists" });
       }
       
       // Check if email already exists
+      console.log("Checking if email exists:", userInput.email);
       const existingEmail = await storage.getUserByEmail(userInput.email);
       if (existingEmail) {
+        console.log("Email already exists");
         return res.status(400).json({ message: "Email already exists" });
       }
       
       // Create the user with hashed password
+      console.log("Hashing password");
       const hashedPassword = await hashPassword(userInput.password);
+      console.log("Creating user in database");
       const user = await storage.createUser({
         ...userInput,
         password: hashedPassword,
       });
+      console.log("User created successfully:", { id: user.id, username: user.username });
       
       // Remove the password from the returned user
       const { password, ...userWithoutPassword } = user;
       
       // Log the user in
+      console.log("Logging in the new user");
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error("Error during login after registration:", err);
+          return next(err);
+        }
+        console.log("User logged in successfully, sending response");
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
+      console.error("Error during registration:", error);
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error).message;
+        console.error("Validation error:", validationError);
+        return res.status(400).json({ message: validationError });
       }
       next(error);
     }

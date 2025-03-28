@@ -59,15 +59,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
+      console.log("Register mutation called with:", credentials);
       try {
         const res = await apiRequest("POST", "/api/register", credentials);
-        return await res.json();
+        const data = await res.json();
+        console.log("Registration successful response:", data);
+        return data;
       } catch (error) {
         console.error("Registration error:", error);
         throw error;
       }
     },
     onSuccess: (user: SelectUser) => {
+      console.log("Registration success callback with user:", user);
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful!",
@@ -75,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Registration onError callback:", error);
       toast({
         title: "Registration failed",
         description: error.message,

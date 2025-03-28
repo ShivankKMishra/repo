@@ -20,15 +20,33 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  console.log(`Making ${method} request to ${url}`, { data });
+  
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
+    
+    console.log(`Response from ${url}:`, { status: res.status, statusText: res.statusText });
+    
+    // Clone the response to be able to log it AND return it
+    const resClone = res.clone();
+    try {
+      const responseData = await resClone.json();
+      console.log(`Response data from ${url}:`, responseData);
+    } catch (e) {
+      console.log(`Could not parse response from ${url} as JSON`);
+    }
+    
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error(`Error in apiRequest to ${url}:`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

@@ -36,25 +36,12 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [location, navigate] = useLocation();
   
-  // Try to use auth and handle it safely if not in an auth context
-  let user = null;
-  let loginMutation: any = { 
-    mutate: () => {},
-    isPending: false 
-  };
-  let registerMutation: any = { 
-    mutate: () => {},
-    isPending: false 
-  };
-  
-  try {
-    const auth = useAuth();
-    user = auth.user;
-    loginMutation = auth.loginMutation;
-    registerMutation = auth.registerMutation;
-  } catch (error) {
-    // silently handle the case where auth provider isn't available
-  }
+  // Use the auth context
+  const { 
+    user,
+    loginMutation,
+    registerMutation 
+  } = useAuth();
   
   // Redirect if already logged in
   useEffect(() => {
@@ -88,6 +75,12 @@ export default function AuthPage() {
   };
   
   const onRegisterSubmit = (data: RegisterFormValues) => {
+    console.log("Register form submitted with data:", data);
+    
+    // Debug what registerMutation is
+    console.log("registerMutation type:", typeof registerMutation);
+    console.log("registerMutation keys:", Object.keys(registerMutation));
+    
     registerMutation.mutate(data);
   };
   
