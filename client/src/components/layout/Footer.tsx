@@ -44,33 +44,33 @@ export default function Footer() {
           <div>
             <h4 className="font-playfair text-lg font-bold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-white/70">
-              <li><Link href="/products"><a className="hover:text-amber transition">Browse Crafts</a></Link></li>
-              <li><Link href="/artisans"><a className="hover:text-amber transition">Meet Artisans</a></Link></li>
-              <li><Link href="/events"><a className="hover:text-amber transition">Upcoming Events</a></Link></li>
-              <li><Link href="/community"><a className="hover:text-amber transition">Community Forum</a></Link></li>
-              <li><Link href="/stories"><a className="hover:text-amber transition">Artisan Stories</a></Link></li>
+              <li><Link href="/products" className="hover:text-amber transition">Browse Crafts</Link></li>
+              <li><Link href="/artisans" className="hover:text-amber transition">Meet Artisans</Link></li>
+              <li><Link href="/events" className="hover:text-amber transition">Upcoming Events</Link></li>
+              <li><Link href="/community" className="hover:text-amber transition">Community Forum</Link></li>
+              <li><Link href="/stories" className="hover:text-amber transition">Artisan Stories</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-playfair text-lg font-bold mb-4">For Artisans</h4>
             <ul className="space-y-2 text-white/70">
-              <li><Link href="/join-as-artisan"><a className="hover:text-amber transition">Join as an Artisan</a></Link></li>
-              <li><Link href="/dashboard"><a className="hover:text-amber transition">Artisan Dashboard</a></Link></li>
-              <li><Link href="/skill-development"><a className="hover:text-amber transition">Skill Development</a></Link></li>
-              <li><Link href="/event-registration"><a className="hover:text-amber transition">Event Registration</a></Link></li>
-              <li><Link href="/success-stories"><a className="hover:text-amber transition">Artisan Success Stories</a></Link></li>
+              <li><Link href="/join-as-artisan" className="hover:text-amber transition">Join as an Artisan</Link></li>
+              <li><Link href="/dashboard" className="hover:text-amber transition">Artisan Dashboard</Link></li>
+              <li><Link href="/skill-development" className="hover:text-amber transition">Skill Development</Link></li>
+              <li><Link href="/event-registration" className="hover:text-amber transition">Event Registration</Link></li>
+              <li><Link href="/success-stories" className="hover:text-amber transition">Artisan Success Stories</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-playfair text-lg font-bold mb-4">Support</h4>
             <ul className="space-y-2 text-white/70">
-              <li><Link href="/contact"><a className="hover:text-amber transition">Contact Us</a></Link></li>
-              <li><Link href="/help"><a className="hover:text-amber transition">Help Center</a></Link></li>
-              <li><Link href="/privacy"><a className="hover:text-amber transition">Privacy Policy</a></Link></li>
-              <li><Link href="/terms"><a className="hover:text-amber transition">Terms of Service</a></Link></li>
-              <li><Link href="/returns"><a className="hover:text-amber transition">Return & Refund Policy</a></Link></li>
+              <li><Link href="/contact" className="hover:text-amber transition">Contact Us</Link></li>
+              <li><Link href="/help" className="hover:text-amber transition">Help Center</Link></li>
+              <li><Link href="/privacy" className="hover:text-amber transition">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-amber transition">Terms of Service</Link></li>
+              <li><Link href="/returns" className="hover:text-amber transition">Return & Refund Policy</Link></li>
             </ul>
           </div>
         </div>
