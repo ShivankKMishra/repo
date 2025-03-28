@@ -24,12 +24,48 @@ router.use(cors());
 router.use(express.json());
 router.use(authenticateJWT);
 
+// Root route - same as /posts
+router.get('/', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+    const posts = await storage.getForumPosts(limit);
+    
+    // Add reply count to each post
+    const postsWithReplyCounts = await Promise.all(
+      posts.map(async (post) => {
+        const replies = await storage.getForumReplies(post._id);
+        return {
+          ...post,
+          replyCount: replies.length
+        };
+      })
+    );
+    
+    return successResponse(res, 200, postsWithReplyCounts);
+  } catch (error) {
+    console.error("Failed to fetch forum posts:", error);
+    return errorResponse(res, 500, "Failed to fetch forum posts");
+  }
+});
+
 // Get all forum posts
 router.get('/posts', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     const posts = await storage.getForumPosts(limit);
-    return successResponse(res, 200, posts);
+    
+    // Add reply count to each post
+    const postsWithReplyCounts = await Promise.all(
+      posts.map(async (post) => {
+        const replies = await storage.getForumReplies(post._id);
+        return {
+          ...post,
+          replyCount: replies.length
+        };
+      })
+    );
+    
+    return successResponse(res, 200, postsWithReplyCounts);
   } catch (error) {
     console.error("Failed to fetch forum posts:", error);
     return errorResponse(res, 500, "Failed to fetch forum posts");
