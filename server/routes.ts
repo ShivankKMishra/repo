@@ -163,18 +163,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Artisan profiles
   app.get("/api/artisans", async (req, res) => {
     try {
-      // Get all users that are artisans - using MongoDB directly
-      const { UserModel } = await import("@shared/schema");
+      // Get all users with in-memory storage
+      const allUsers = await storage.getAllUsers();
       
-      // Get all users that are artisans
-      const artisanUsers = await UserModel.find({ isArtisan: true });
+      // Filter users that are artisans
+      const artisanUsers = allUsers.filter(user => user.isArtisan);
       
       // Get profiles for each artisan
       const artisansWithProfiles = await Promise.all(
         artisanUsers.map(async (user) => {
           const profile = await storage.getArtisanProfile(user._id.toString());
-          const userObj = user.toObject();
-          const { password, ...userWithoutPassword } = userObj;
+          const { password, ...userWithoutPassword } = user;
           return {
             ...userWithoutPassword,
             profile

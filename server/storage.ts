@@ -24,6 +24,7 @@ dotenv.config();
 
 export interface IStorage {
   // User operations
+  getAllUsers(): Promise<User[]>;
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -100,6 +101,10 @@ export class MemStorage implements IStorage {
     ] as unknown as Category[];
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return this.users;
+  }
+  
   async getUser(id: string): Promise<User | undefined> {
     return this.users.find(user => user._id.toString() === id);
   }
@@ -326,6 +331,15 @@ export class DatabaseStorage implements IStorage {
   }
   
   // User operations
+  async getAllUsers(): Promise<User[]> {
+    try {
+      return await UserModel.find().lean();
+    } catch (error) {
+      console.error("Error in getAllUsers:", error);
+      return [];
+    }
+  }
+  
   async getUser(id: string): Promise<User | undefined> {
     try {
       const user = await UserModel.findById(id).lean();
