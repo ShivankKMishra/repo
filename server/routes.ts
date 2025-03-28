@@ -3,12 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
+import mongoose from "mongoose";
 import { 
-  insertCategorySchema,
-  insertProductSchema,
-  insertEventSchema,
-  insertForumPostSchema,
-  insertForumReplySchema
+  categorySchema,
+  productSchema,
+  eventSchema,
+  forumPostSchema,
+  forumReplySchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -19,7 +20,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getCategories();
-      res.json(categories);
+      
+      // Convert mongoose documents to plain objects
+      const categoryObjs = categories.map(category => 
+        category.toObject ? category.toObject() : category
+      );
+      
+      res.json(categoryObjs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categories" });
     }
@@ -27,8 +34,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/categories/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid category ID" });
       }
       
@@ -37,7 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Category not found" });
       }
       
-      res.json(category);
+      // Convert mongoose document to plain object if needed
+      const categoryObj = category.toObject ? category.toObject() : category;
+      
+      res.json(categoryObj);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch category" });
     }
@@ -48,7 +58,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const products = await storage.getProducts(limit);
-      res.json(products);
+      
+      // Convert mongoose documents to plain objects
+      const productObjs = products.map(product => 
+        product.toObject ? product.toObject() : product
+      );
+      
+      res.json(productObjs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products" });
     }
@@ -56,13 +72,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/products/category/:categoryId", async (req, res) => {
     try {
-      const categoryId = parseInt(req.params.categoryId);
-      if (isNaN(categoryId)) {
+      const categoryId = req.params.categoryId;
+      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
         return res.status(400).json({ message: "Invalid category ID" });
       }
       
       const products = await storage.getProductsByCategory(categoryId);
-      res.json(products);
+      
+      // Convert mongoose documents to plain objects
+      const productObjs = products.map(product => 
+        product.toObject ? product.toObject() : product
+      );
+      
+      res.json(productObjs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products by category" });
     }
@@ -70,13 +92,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/products/artisan/:artisanId", async (req, res) => {
     try {
-      const artisanId = parseInt(req.params.artisanId);
-      if (isNaN(artisanId)) {
+      const artisanId = req.params.artisanId;
+      if (!artisanId || !mongoose.Types.ObjectId.isValid(artisanId)) {
         return res.status(400).json({ message: "Invalid artisan ID" });
       }
       
       const products = await storage.getProductsByArtisan(artisanId);
-      res.json(products);
+      
+      // Convert mongoose documents to plain objects
+      const productObjs = products.map(product => 
+        product.toObject ? product.toObject() : product
+      );
+      
+      res.json(productObjs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products by artisan" });
     }
@@ -84,8 +112,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/products/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid product ID" });
       }
       
@@ -94,7 +122,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
       
-      res.json(product);
+      // Convert mongoose document to plain object
+      const productObj = product.toObject ? product.toObject() : product;
+      
+      res.json(productObj);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch product" });
     }
@@ -110,14 +141,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only artisans can create products" });
       }
       
-      const productData = insertProductSchema.parse(req.body);
-      
-      if (productData.artisanId !== req.user.id) {
-        return res.status(403).json({ message: "You can only create products for yourself" });
-      }
+      const productData = productSchema.parse({
+        ...req.body,
+        artisanId: req.user._id.toString()
+      });
       
       const product = await storage.createProduct(productData);
-      res.status(201).json(product);
+      
+      // Convert mongoose document to plain object
+      const productObj = product.toObject ? product.toObject() : product;
+      
+      res.status(201).json(productObj);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid product data", errors: error.errors });
@@ -129,22 +163,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Artisan profiles
   app.get("/api/artisans", async (req, res) => {
     try {
-      // With database implementation, we need to query for all users first
-      // and then filter for artisans
-      const { db } = await import("./db");
-      const { users } = await import("@shared/schema");
-      const { eq } = await import("drizzle-orm");
+      // Get all users that are artisans - using MongoDB directly
+      const { UserModel } = await import("@shared/schema");
       
       // Get all users that are artisans
-      const artisanUsers = await db.select()
-        .from(users)
-        .where(eq(users.isArtisan, true));
+      const artisanUsers = await UserModel.find({ isArtisan: true });
       
       // Get profiles for each artisan
       const artisansWithProfiles = await Promise.all(
         artisanUsers.map(async (user) => {
-          const profile = await storage.getArtisanProfile(user.id);
-          const { password, ...userWithoutPassword } = user;
+          const profile = await storage.getArtisanProfile(user._id.toString());
+          const userObj = user.toObject();
+          const { password, ...userWithoutPassword } = userObj;
           return {
             ...userWithoutPassword,
             profile
@@ -161,8 +191,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/artisans/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      // No need to parse as integer for MongoDB
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid artisan ID" });
       }
       
@@ -172,7 +203,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const profile = await storage.getArtisanProfile(id);
-      const { password, ...userWithoutPassword } = user;
+      
+      // Convert Mongoose document to plain object
+      const userObj = user.toObject ? user.toObject() : user;
+      const { password, ...userWithoutPassword } = userObj;
       
       res.json({
         ...userWithoutPassword,
@@ -188,7 +222,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const events = await storage.getEvents(limit);
-      res.json(events);
+      
+      // Convert mongoose documents to plain objects
+      const eventObjs = events.map(event => 
+        event.toObject ? event.toObject() : event
+      );
+      
+      res.json(eventObjs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch events" });
     }
@@ -196,8 +236,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/events/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid event ID" });
       }
       
@@ -206,7 +246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
       
-      res.json(event);
+      // Convert mongoose document to plain object
+      const eventObj = event.toObject ? event.toObject() : event;
+      
+      res.json(eventObj);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch event" });
     }
@@ -218,10 +261,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "You must be logged in to create an event" });
       }
       
-      const eventData = insertEventSchema.parse(req.body);
+      // Add creator information to event data
+      const eventData = eventSchema.parse({
+        ...req.body,
+        organizer: req.user.username || 'Anonymous',
+        createdAt: new Date()
+      });
+      
       const event = await storage.createEvent(eventData);
       
-      res.status(201).json(event);
+      // Convert mongoose document to plain object if needed
+      const eventObj = event.toObject ? event.toObject() : event;
+      
+      res.status(201).json(eventObj);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid event data", errors: error.errors });
@@ -238,9 +290,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const postsWithReplyCounts = await Promise.all(
         posts.map(async (post) => {
-          const replies = await storage.getForumReplies(post.id);
+          // MongoDB document has _id instead of id
+          const postObj = post.toObject ? post.toObject() : post;
+          const id = postObj._id.toString();
+          const replies = await storage.getForumReplies(id);
           return {
-            ...post,
+            ...postObj,
             replyCount: replies.length
           };
         })
@@ -254,8 +309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/forum/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid post ID" });
       }
       
@@ -266,9 +321,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const replies = await storage.getForumReplies(id);
       
+      // Convert to plain objects if mongoose documents
+      const postObj = post.toObject ? post.toObject() : post;
+      const repliesObj = replies.map(reply => reply.toObject ? reply.toObject() : reply);
+      
       res.json({
-        post,
-        replies
+        post: postObj,
+        replies: repliesObj
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch forum post" });
@@ -281,13 +340,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "You must be logged in to create a forum post" });
       }
       
-      const postData = insertForumPostSchema.parse({
+      const postData = forumPostSchema.parse({
         ...req.body,
-        userId: req.user.id
+        userId: req.user._id.toString(),
+        createdAt: new Date()
       });
       
       const post = await storage.createForumPost(postData);
-      res.status(201).json(post);
+      
+      // Convert mongoose document to plain object if needed
+      const postObj = post.toObject ? post.toObject() : post;
+      
+      res.status(201).json(postObj);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid forum post data", errors: error.errors });
@@ -302,8 +366,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "You must be logged in to reply to a forum post" });
       }
       
-      const postId = parseInt(req.params.postId);
-      if (isNaN(postId)) {
+      const postId = req.params.postId;
+      if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
         return res.status(400).json({ message: "Invalid post ID" });
       }
       
@@ -312,14 +376,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Forum post not found" });
       }
       
-      const replyData = insertForumReplySchema.parse({
+      const replyData = forumReplySchema.parse({
         ...req.body,
-        postId,
-        userId: req.user.id
+        postId: postId,
+        userId: req.user._id.toString()
       });
       
       const reply = await storage.createForumReply(replyData);
-      res.status(201).json(reply);
+      
+      // Convert to plain object if mongoose document
+      const replyObj = reply.toObject ? reply.toObject() : reply;
+      
+      res.status(201).json(replyObj);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid reply data", errors: error.errors });

@@ -6,18 +6,22 @@ import { storage } from "./storage";
 import { 
   User as SelectUser,
   InsertUser,
-  insertUserSchema
+  userSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import dotenv from "dotenv";
 
-// JWT Secret for signing tokens - should be in environment variables
-const JWT_SECRET = process.env.JWT_SECRET || "karigar-connect-jwt-secret";
-const JWT_EXPIRES_IN = "7d"; // Token expiration time
+// Load environment variables
+dotenv.config();
+
+// JWT Secret for signing tokens - from environment variables
+const JWT_SECRET = process.env.VITE_JWT_SECRET || "karigar-connect-jwt-secret";
+const JWT_EXPIRES_IN = process.env.VITE_JWT_EXPIRATION || "7d"; // Token expiration time
 
 // Type definitions
 interface JwtPayload {
-  userId: number;
+  userId: string;
   username: string;
   email: string;
 }
@@ -48,12 +52,15 @@ async function comparePasswords(supplied: string, stored: string) {
 // Generate JWT token
 function generateToken(user: SelectUser): string {
   const payload: JwtPayload = {
-    userId: user.id,
+    userId: user._id ? user._id.toString() : '',
     username: user.username,
     email: user.email
   };
   
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  // Cast the secret to a string type that jwt.sign accepts
+  const secret = String(JWT_SECRET);
+  
+  return jwt.sign(payload, secret, { expiresIn: JWT_EXPIRES_IN });
 }
 
 // Authentication middleware
@@ -63,7 +70,10 @@ function authenticateJWT(req: Request, res: Response, next: NextFunction) {
   if (authHeader) {
     const token = authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
     
-    jwt.verify(token, JWT_SECRET, async (err, payload) => {
+    // Cast the secret to a string type that jwt.verify accepts
+    const secret = String(JWT_SECRET);
+    
+    jwt.verify(token, secret, async (err, payload) => {
       if (err) {
         return res.sendStatus(403);
       }
@@ -92,7 +102,7 @@ export function setupAuth(app: Express) {
     try {
       // Validate the input
       console.log("Validating user input with schema");
-      const userInput = insertUserSchema.parse(req.body);
+      const userInput = userSchema.parse(req.body);
       console.log("Input validation passed:", userInput);
       
       // Check if username already exists
@@ -119,7 +129,7 @@ export function setupAuth(app: Express) {
         ...userInput,
         password: hashedPassword,
       });
-      console.log("User created successfully:", { id: user.id, username: user.username });
+      console.log("User created successfully:", { id: user._id, username: user.username });
       
       // Generate token
       const token = generateToken(user);
@@ -157,7 +167,7 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
-      console.log("User authenticated successfully:", { id: user.id, username: user.username });
+      console.log("User authenticated successfully:", { id: user._id, username: user.username });
       
       // Generate JWT token
       const token = generateToken(user);
@@ -188,7 +198,7 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     
-    console.log("Returning authenticated user:", { id: req.user.id, username: req.user.username });
+    console.log("Returning authenticated user:", { id: req.user._id, username: req.user.username });
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
