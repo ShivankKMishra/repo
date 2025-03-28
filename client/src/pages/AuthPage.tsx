@@ -35,31 +35,8 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [location, navigate] = useLocation();
   
-  // Initialize with empty defaults that will be replaced with context values
-  let user = null;
-  let loginMutation = {
-    mutate: (data: any) => {
-      console.error("Login mutation not available");
-    },
-    isPending: false,
-  };
-  let registerMutation = {
-    mutate: (data: any) => {
-      console.error("Register mutation not available");
-    },
-    isPending: false,
-  };
-  
-  // Safe usage of the auth context
-  try {
-    const auth = useAuth();
-    user = auth.user;
-    loginMutation = auth.loginMutation;
-    registerMutation = auth.registerMutation;
-    console.log("Auth context loaded successfully");
-  } catch (error) {
-    console.error("Failed to use auth context:", error);
-  }
+  // Use auth context - now has default values if context not available
+  const { user, loginMutation, registerMutation } = useAuth();
   
   // Redirect if already logged in
   useEffect(() => {

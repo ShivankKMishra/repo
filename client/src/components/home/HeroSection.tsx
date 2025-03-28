@@ -12,15 +12,12 @@ export default function HeroSection() {
             Connect directly with skilled artisans and bring authentic handcrafted treasures into your home.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/products">
-              <a className="bg-cream text-terracotta font-medium px-6 py-3 rounded-full inline-block text-center hover:bg-amber hover:text-white transition duration-300">
-                Explore Crafts
-              </a>
+            {/* Fixed: Use Link component directly without nested anchor tags */}
+            <Link href="/products" className="bg-cream text-terracotta font-medium px-6 py-3 rounded-full inline-block text-center hover:bg-amber hover:text-white transition duration-300">
+              Explore Crafts
             </Link>
-            <Link href="/artisans">
-              <a className="bg-transparent border-2 border-cream text-cream font-medium px-6 py-3 rounded-full inline-block text-center hover:bg-cream/20 transition duration-300">
-                Meet Artisans
-              </a>
+            <Link href="/artisans" className="bg-transparent border-2 border-cream text-cream font-medium px-6 py-3 rounded-full inline-block text-center hover:bg-cream/20 transition duration-300">
+              Meet Artisans
             </Link>
           </div>
         </div>
