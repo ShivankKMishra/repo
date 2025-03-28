@@ -172,7 +172,8 @@ class LocalStorage implements IStorage {
       this.saveToLocalStorage();
     }
     
-    const posts = [...this.storage.forumPosts];
+    // Ensure we're working with an array
+    const posts = Array.isArray(this.storage.forumPosts) ? [...this.storage.forumPosts] : [];
     console.log('Posts array:', posts);
     
     if (limit) {

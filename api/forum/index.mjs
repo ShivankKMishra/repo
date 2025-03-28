@@ -30,18 +30,14 @@ router.get('/', async (req, res) => {
     console.log('Fetching forum posts...');
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     
-    // Initialize storage if needed
-    if (!storage.storage.forumPosts) {
-      storage.storage.forumPosts = [];
-    }
-    
-    const posts = await storage.getForumPosts(limit);
-    console.log('Posts from storage:', JSON.stringify(posts, null, 2));
-    
+    // Get posts and ensure we have an array
+    let posts = await storage.getForumPosts(limit);
     if (!Array.isArray(posts)) {
       console.error('Posts is not an array:', posts);
-      return errorResponse(res, 500, "Invalid posts data format");
+      posts = [];
     }
+    
+    console.log('Posts from storage:', JSON.stringify(posts, null, 2));
     
     // Add reply count to each post
     const postsWithReplyCounts = await Promise.all(
