@@ -60,29 +60,29 @@ export default function Header() {
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/">
-              <a className={`hover:text-terracotta transition ${location === '/' ? 'text-terracotta' : 'text-warmGray'}`}>
+              <span className={`hover:text-terracotta transition cursor-pointer ${location === '/' ? 'text-terracotta' : 'text-warmGray'}`}>
                 Explore
-              </a>
+              </span>
             </Link>
             <Link href="/artisans">
-              <a className={`hover:text-terracotta transition ${location === '/artisans' ? 'text-terracotta' : 'text-warmGray'}`}>
+              <span className={`hover:text-terracotta transition cursor-pointer ${location === '/artisans' ? 'text-terracotta' : 'text-warmGray'}`}>
                 Artisans
-              </a>
+              </span>
             </Link>
             <Link href="/events">
-              <a className={`hover:text-terracotta transition ${location === '/events' ? 'text-terracotta' : 'text-warmGray'}`}>
+              <span className={`hover:text-terracotta transition cursor-pointer ${location === '/events' ? 'text-terracotta' : 'text-warmGray'}`}>
                 Events
-              </a>
+              </span>
             </Link>
             <Link href="/community">
-              <a className={`hover:text-terracotta transition ${location === '/community' ? 'text-terracotta' : 'text-warmGray'}`}>
+              <span className={`hover:text-terracotta transition cursor-pointer ${location === '/community' ? 'text-terracotta' : 'text-warmGray'}`}>
                 Community
-              </a>
+              </span>
             </Link>
             <Link href="/stories">
-              <a className={`hover:text-terracotta transition ${location === '/stories' ? 'text-terracotta' : 'text-warmGray'}`}>
+              <span className={`hover:text-terracotta transition cursor-pointer ${location === '/stories' ? 'text-terracotta' : 'text-warmGray'}`}>
                 Stories
-              </a>
+              </span>
             </Link>
           </nav>
           
@@ -143,39 +143,39 @@ export default function Header() {
         <div className="bg-cream border-t border-amber/20 py-2 px-4 md:hidden">
           <nav className="flex flex-col space-y-2">
             <Link href="/">
-              <a className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition ${
+              <span className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition cursor-pointer ${
                 location === '/' ? 'text-terracotta bg-cream/50' : ''
               }`}>
                 Explore
-              </a>
+              </span>
             </Link>
             <Link href="/artisans">
-              <a className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition ${
+              <span className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition cursor-pointer ${
                 location === '/artisans' ? 'text-terracotta bg-cream/50' : ''
               }`}>
                 Artisans
-              </a>
+              </span>
             </Link>
             <Link href="/events">
-              <a className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition ${
+              <span className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition cursor-pointer ${
                 location === '/events' ? 'text-terracotta bg-cream/50' : ''
               }`}>
                 Events
-              </a>
+              </span>
             </Link>
             <Link href="/community">
-              <a className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition ${
+              <span className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition cursor-pointer ${
                 location === '/community' ? 'text-terracotta bg-cream/50' : ''
               }`}>
                 Community
-              </a>
+              </span>
             </Link>
             <Link href="/stories">
-              <a className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition ${
+              <span className={`text-warmGray hover:text-terracotta py-2 px-4 rounded-lg hover:bg-cream transition cursor-pointer ${
                 location === '/stories' ? 'text-terracotta bg-cream/50' : ''
               }`}>
                 Stories
-              </a>
+              </span>
             </Link>
           </nav>
         </div>
