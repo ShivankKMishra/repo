@@ -119,7 +119,7 @@ export default function CommunityForum() {
                 ) : (
                   <div className="space-y-4">
                     {forumPosts?.slice(0, 3).map((post) => (
-                      <Link key={post.id} href={`/forum/${post.id}`}>
+                      <Link key={post._id} href={`/forum/${post._id}`}>
                         <div className="p-4 rounded-lg bg-cream hover:bg-cream/80 transition cursor-pointer">
                           <div className="flex justify-between mb-2">
                             <h4 className="font-medium text-warmGray">{post.title}</h4>

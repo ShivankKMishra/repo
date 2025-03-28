@@ -27,13 +27,22 @@ router.use(authenticateJWT);
 // Root route - same as /posts
 router.get('/', async (req, res) => {
   try {
+    console.log('Fetching forum posts...');
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     const posts = await storage.getForumPosts(limit);
+    console.log('Posts from storage:', JSON.stringify(posts, null, 2));
+    
+    if (!Array.isArray(posts)) {
+      console.error('Posts is not an array:', posts);
+      return errorResponse(res, 500, "Invalid posts data format");
+    }
     
     // Add reply count to each post
     const postsWithReplyCounts = await Promise.all(
       posts.map(async (post) => {
+        console.log('Processing post:', JSON.stringify(post, null, 2));
         const replies = await storage.getForumReplies(post._id);
+        console.log('Replies for post:', JSON.stringify(replies, null, 2));
         return {
           ...post,
           replyCount: replies.length
@@ -41,9 +50,11 @@ router.get('/', async (req, res) => {
       })
     );
     
+    console.log('Final posts with reply counts:', JSON.stringify(postsWithReplyCounts, null, 2));
     return successResponse(res, 200, postsWithReplyCounts);
   } catch (error) {
     console.error("Failed to fetch forum posts:", error);
+    console.error("Error stack:", error.stack);
     return errorResponse(res, 500, "Failed to fetch forum posts");
   }
 });

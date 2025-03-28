@@ -163,7 +163,10 @@ class LocalStorage implements IStorage {
 
   // Forum operations
   async getForumPosts(limit?: number): Promise<ForumPost[]> {
+    console.log('getForumPosts called with limit:', limit);
+    console.log('Current storage state:', this.storage);
     const posts = [...this.storage.forumPosts];
+    console.log('Posts array:', posts);
     if (limit) {
       return posts.slice(0, limit);
     }
@@ -188,7 +191,11 @@ class LocalStorage implements IStorage {
   }
   
   async getForumReplies(postId: string): Promise<ForumReply[]> {
-    return this.storage.forumReplies.filter((reply: ForumReply) => (reply.postId as unknown as string) === postId);
+    console.log('getForumReplies called with postId:', postId);
+    console.log('Current forumReplies:', this.storage.forumReplies);
+    const replies = this.storage.forumReplies.filter((reply: ForumReply) => (reply.postId as unknown as string) === postId);
+    console.log('Filtered replies:', replies);
+    return replies;
   }
   
   async createForumReply(replyData: InsertForumReply): Promise<ForumReply> {
