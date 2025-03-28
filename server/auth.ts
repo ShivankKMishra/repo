@@ -1,21 +1,32 @@
-import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
-import session from "express-session";
+import { Express, Request, Response, NextFunction } from "express";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import jwt from "jsonwebtoken";
 import { storage } from "./storage";
 import { 
   User as SelectUser,
   InsertUser,
   insertUserSchema
- } from "@shared/schema";
+} from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
+// JWT Secret for signing tokens - should be in environment variables
+const JWT_SECRET = process.env.JWT_SECRET || "karigar-connect-jwt-secret";
+const JWT_EXPIRES_IN = "7d"; // Token expiration time
+
+// Type definitions
+interface JwtPayload {
+  userId: number;
+  username: string;
+  email: string;
+}
+
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface Request {
+      user?: SelectUser;
+    }
   }
 }
 
@@ -34,47 +45,48 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-export function setupAuth(app: Express) {
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "karigar-connect-secret",
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore,
-    cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    }
+// Generate JWT token
+function generateToken(user: SelectUser): string {
+  const payload: JwtPayload = {
+    userId: user.id,
+    username: user.username,
+    email: user.email
   };
+  
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
 
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid username or password" });
-        } else {
-          return done(null, user);
-        }
-      } catch (err) {
-        return done(err);
+// Authentication middleware
+function authenticateJWT(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader) {
+    const token = authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
+    
+    jwt.verify(token, JWT_SECRET, async (err, payload) => {
+      if (err) {
+        return res.sendStatus(403);
       }
-    }),
-  );
+      
+      if (payload && typeof payload !== 'string') {
+        const jwtPayload = payload as JwtPayload;
+        const user = await storage.getUser(jwtPayload.userId);
+        if (user) {
+          req.user = user;
+        }
+      }
+      next();
+    });
+  } else {
+    next();
+  }
+}
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
-    try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (err) {
-      done(err);
-    }
-  });
+export function setupAuth(app: Express) {
+  // Apply JWT authentication middleware
+  app.use(authenticateJWT);
 
+  // Register endpoint
   app.post("/api/register", async (req, res, next) => {
     console.log("Registration request received:", req.body);
     try {
@@ -109,18 +121,16 @@ export function setupAuth(app: Express) {
       });
       console.log("User created successfully:", { id: user.id, username: user.username });
       
+      // Generate token
+      const token = generateToken(user);
+      
       // Remove the password from the returned user
       const { password, ...userWithoutPassword } = user;
       
-      // Log the user in
-      console.log("Logging in the new user");
-      req.login(user, (err) => {
-        if (err) {
-          console.error("Error during login after registration:", err);
-          return next(err);
-        }
-        console.log("User logged in successfully, sending response");
-        res.status(201).json(userWithoutPassword);
+      console.log("User registered successfully, sending response with token");
+      res.status(201).json({
+        user: userWithoutPassword,
+        token
       });
     } catch (error) {
       console.error("Error during registration:", error);
@@ -133,30 +143,52 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
+  // Login endpoint
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
       
-      req.login(user, (err: Error | null) => {
-        if (err) return next(err);
-        
-        const { password, ...userWithoutPassword } = user as any;
-        res.status(200).json(userWithoutPassword);
+      console.log("Login attempt for user:", username);
+      
+      // Find the user
+      const user = await storage.getUserByUsername(username);
+      if (!user || !(await comparePasswords(password, user.password))) {
+        console.log("Invalid credentials for user:", username);
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      console.log("User authenticated successfully:", { id: user.id, username: user.username });
+      
+      // Generate JWT token
+      const token = generateToken(user);
+      const { password: _, ...userWithoutPassword } = user;
+      
+      console.log("Sending login response with token");
+      res.status(200).json({
+        user: userWithoutPassword,
+        token
       });
-    })(req, res, next);
+    } catch (error) {
+      console.error("Server error during login:", error);
+      res.status(500).json({ message: "Server error during login" });
+    }
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err: Error | null) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
+  // Logout - client handles by removing the token
+  app.post("/api/logout", (req, res) => {
+    // JWT is stateless, so server doesn't need to do anything
+    // Client will remove the token from local storage
+    console.log("User logout - stateless with JWT");
+    res.status(200).json({ message: "Logged out successfully" });
   });
 
+  // Get current user
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
     
+    console.log("Returning authenticated user:", { id: req.user.id, username: req.user.username });
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });

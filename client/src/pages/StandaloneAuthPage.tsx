@@ -17,6 +17,30 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User as SelectUser, InsertUser } from "@shared/schema";
 
+// JWT token management
+const TOKEN_KEY = "karigar_auth_token";
+
+// Save token to local storage
+const saveToken = (token: string) => {
+  localStorage.setItem(TOKEN_KEY, token);
+};
+
+// Get token from local storage
+const getToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
+};
+
+// Remove token from local storage
+const removeToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+// Response types for JWT authentication
+interface AuthResponse {
+  user: SelectUser;
+  token: string;
+};
+
 // Login form schema
 const loginSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
@@ -49,8 +73,21 @@ export default function StandaloneAuthPage() {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/user");
-        if (res.status === 401) return null;
+        const token = getToken();
+        if (!token) return null;
+        
+        const res = await fetch("/api/user", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+          // Token might be invalid or expired
+          removeToken();
+          return null;
+        }
+        
         if (!res.ok) throw new Error("Failed to fetch user");
         return await res.json();
       } catch (error) {
@@ -68,19 +105,26 @@ export default function StandaloneAuthPage() {
         const res = await apiRequest("POST", "/api/login", credentials);
         const data = await res.json();
         console.log("Login successful response:", data);
-        return data;
+        return data as AuthResponse;
       } catch (error) {
         console.error("Login error:", error);
         throw error;
       }
     },
-    onSuccess: (userData: SelectUser) => {
-      console.log("Login success callback with user:", userData);
-      queryClient.setQueryData(["/api/user"], userData);
+    onSuccess: (response: AuthResponse) => {
+      console.log("Login success callback with response:", response);
+      
+      // Save token to local storage
+      saveToken(response.token);
+      
+      // Store user info in query cache
+      queryClient.setQueryData(["/api/user"], response.user);
+      
       toast({
         title: "Welcome back!",
-        description: `You are now logged in as ${userData.username}`,
+        description: `You are now logged in as ${response.user.username}`,
       });
+      
       navigate("/");
     },
     onError: (error: Error) => {
@@ -101,19 +145,26 @@ export default function StandaloneAuthPage() {
         const res = await apiRequest("POST", "/api/register", credentials);
         const data = await res.json();
         console.log("Registration successful response:", data);
-        return data;
+        return data as AuthResponse;
       } catch (error) {
         console.error("Registration error:", error);
         throw error;
       }
     },
-    onSuccess: (userData: SelectUser) => {
-      console.log("Registration success callback with user:", userData);
-      queryClient.setQueryData(["/api/user"], userData);
+    onSuccess: (response: AuthResponse) => {
+      console.log("Registration success callback with response:", response);
+      
+      // Save token to local storage
+      saveToken(response.token);
+      
+      // Store user info in query cache
+      queryClient.setQueryData(["/api/user"], response.user);
+      
       toast({
         title: "Registration successful!",
-        description: `Welcome to KarigarConnect, ${userData.username}`,
+        description: `Welcome to KarigarConnect, ${response.user.username}`,
       });
+      
       navigate("/");
     },
     onError: (error: Error) => {

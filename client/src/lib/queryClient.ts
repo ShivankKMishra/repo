@@ -1,5 +1,13 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Token key for local storage
+const TOKEN_KEY = "karigar_auth_token";
+
+// Get token from local storage
+const getToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
+};
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     let errorMessage: string;
@@ -22,11 +30,21 @@ export async function apiRequest(
 ): Promise<Response> {
   console.log(`Making ${method} request to ${url}`, { data });
   
+  // Get the auth token
+  const token = getToken();
+  
+  // Prepare headers with content type and authorization if token exists
+  const headers: HeadersInit = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+  
   try {
     const res = await fetch(url, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers,
       body: data ? JSON.stringify(data) : undefined,
+      // No need for credentials with JWT, but keeping this for backward compatibility
       credentials: "include",
     });
     
@@ -55,8 +73,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get the auth token
+    const token = getToken();
+    
+    // Prepare headers with authorization if token exists
+    const headers: HeadersInit = token 
+      ? { Authorization: `Bearer ${token}` } 
+      : {};
+    
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+      headers,
+      credentials: "include", // Keeping for backward compatibility
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
