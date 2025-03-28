@@ -129,21 +129,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Artisan profiles
   app.get("/api/artisans", async (req, res) => {
     try {
-      const users = await Promise.all(
-        Array.from(storage["users"].values())
-          .filter(user => user.isArtisan)
-          .map(async (user) => {
-            const profile = await storage.getArtisanProfile(user.id);
-            const { password, ...userWithoutPassword } = user;
-            return {
-              ...userWithoutPassword,
-              profile
-            };
-          })
+      // With database implementation, we need to query for all users first
+      // and then filter for artisans
+      const { db } = await import("./db");
+      const { users } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+      
+      // Get all users that are artisans
+      const artisanUsers = await db.select()
+        .from(users)
+        .where(eq(users.isArtisan, true));
+      
+      // Get profiles for each artisan
+      const artisansWithProfiles = await Promise.all(
+        artisanUsers.map(async (user) => {
+          const profile = await storage.getArtisanProfile(user.id);
+          const { password, ...userWithoutPassword } = user;
+          return {
+            ...userWithoutPassword,
+            profile
+          };
+        })
       );
       
-      res.json(users);
+      res.json(artisansWithProfiles);
     } catch (error) {
+      console.error("Error fetching artisans:", error);
       res.status(500).json({ message: "Failed to fetch artisans" });
     }
   });
