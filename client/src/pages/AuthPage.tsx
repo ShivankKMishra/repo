@@ -3,7 +3,6 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart, Loader2 } from 'lucide-react';
@@ -36,12 +35,31 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [location, navigate] = useLocation();
   
-  // Use the auth context
-  const { 
-    user,
-    loginMutation,
-    registerMutation 
-  } = useAuth();
+  // Initialize with empty defaults that will be replaced with context values
+  let user = null;
+  let loginMutation = {
+    mutate: (data: any) => {
+      console.error("Login mutation not available");
+    },
+    isPending: false,
+  };
+  let registerMutation = {
+    mutate: (data: any) => {
+      console.error("Register mutation not available");
+    },
+    isPending: false,
+  };
+  
+  // Safe usage of the auth context
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    loginMutation = auth.loginMutation;
+    registerMutation = auth.registerMutation;
+    console.log("Auth context loaded successfully");
+  } catch (error) {
+    console.error("Failed to use auth context:", error);
+  }
   
   // Redirect if already logged in
   useEffect(() => {

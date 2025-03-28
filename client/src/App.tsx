@@ -4,12 +4,17 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/HomePage";
 import AuthPage from "@/pages/AuthPage";
 import { ProtectedRoute } from "./lib/protected-route";
+import ErrorBoundary from "@/components/ui/error-boundary";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth">
+        <ErrorBoundary>
+          <AuthPage />
+        </ErrorBoundary>
+      </Route>
       {/* Protected routes would be like this: */}
       {/* <ProtectedRoute path="/profile" component={ProfilePage} /> */}
       {/* Fallback to 404 */}
@@ -21,7 +26,9 @@ function Router() {
 function App() {
   return (
     <>
-      <Router />
+      <ErrorBoundary>
+        <Router />
+      </ErrorBoundary>
       <Toaster />
     </>
   );
