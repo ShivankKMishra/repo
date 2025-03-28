@@ -52,7 +52,7 @@ export default function CommunityForum() {
   }
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { data: forumPosts, isLoading } = useQuery<(ForumPost & { replyCount: number })[]>({
+  const { data: forumPosts, isLoading, error } = useQuery<(ForumPost & { replyCount: number })[]>({
     queryKey: ['/api/forum'],
     refetchInterval: false,
   });
@@ -116,9 +116,13 @@ export default function CommunityForum() {
                   <div className="flex justify-center my-8">
                     <Loader2 className="h-8 w-8 animate-spin text-terracotta" />
                   </div>
+                ) : error ? (
+                  <div className="text-center py-6 text-red-500">
+                    Failed to load forum posts. Please try again later.
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    {forumPosts?.slice(0, 3).map((post) => (
+                    {Array.isArray(forumPosts) && forumPosts.slice(0, 3).map((post) => (
                       <Link key={post._id} href={`/forum/${post._id}`}>
                         <div className="p-4 rounded-lg bg-cream hover:bg-cream/80 transition cursor-pointer">
                           <div className="flex justify-between mb-2">
@@ -137,7 +141,7 @@ export default function CommunityForum() {
                       </Link>
                     ))}
                     
-                    {forumPosts?.length === 0 && (
+                    {(!Array.isArray(forumPosts) || forumPosts.length === 0) && (
                       <p className="text-center py-6 text-warmGray/80">
                         No discussions yet. Be the first to start one!
                       </p>

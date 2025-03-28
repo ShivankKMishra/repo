@@ -29,6 +29,12 @@ router.get('/', async (req, res) => {
   try {
     console.log('Fetching forum posts...');
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+    
+    // Initialize storage if needed
+    if (!storage.storage.forumPosts) {
+      storage.storage.forumPosts = [];
+    }
+    
     const posts = await storage.getForumPosts(limit);
     console.log('Posts from storage:', JSON.stringify(posts, null, 2));
     
@@ -40,13 +46,21 @@ router.get('/', async (req, res) => {
     // Add reply count to each post
     const postsWithReplyCounts = await Promise.all(
       posts.map(async (post) => {
-        console.log('Processing post:', JSON.stringify(post, null, 2));
-        const replies = await storage.getForumReplies(post._id);
-        console.log('Replies for post:', JSON.stringify(replies, null, 2));
-        return {
-          ...post,
-          replyCount: replies.length
-        };
+        try {
+          console.log('Processing post:', JSON.stringify(post, null, 2));
+          const replies = await storage.getForumReplies(post._id);
+          console.log('Replies for post:', JSON.stringify(replies, null, 2));
+          return {
+            ...post,
+            replyCount: replies.length
+          };
+        } catch (error) {
+          console.error('Error processing post:', error);
+          return {
+            ...post,
+            replyCount: 0
+          };
+        }
       })
     );
     
