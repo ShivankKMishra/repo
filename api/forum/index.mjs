@@ -19,13 +19,13 @@ const createReplySchema = z.object({
   postId: z.number().int().positive()
 });
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(authenticateJWT);
+const router = express.Router();
+router.use(cors());
+router.use(express.json());
+router.use(authenticateJWT);
 
 // Get all forum posts
-app.get('/api/forum/posts', async (req, res) => {
+router.get('/posts', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     const posts = await storage.getForumPosts(limit);
@@ -37,13 +37,9 @@ app.get('/api/forum/posts', async (req, res) => {
 });
 
 // Get forum post by ID with replies
-app.get('/api/forum/posts/:id', async (req, res) => {
+router.get('/posts/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return errorResponse(res, 400, "Invalid post ID");
-    }
-    
+    const id = req.params.id;
     const post = await storage.getForumPost(id);
     if (!post) {
       return errorResponse(res, 404, "Post not found");
@@ -52,47 +48,9 @@ app.get('/api/forum/posts/:id', async (req, res) => {
     // Get replies for this post
     const replies = await storage.getForumReplies(id);
     
-    // Get user information for post author and reply authors
-    const { db } = await import("../../server/db.js");
-    const { users } = await import("../../shared/schema.js");
-    const { eq, inArray } = await import("drizzle-orm");
-    
-    // Get unique user IDs from post and replies
-    const userIds = [post.userId, ...replies.map(reply => reply.userId)];
-    const uniqueUserIds = [...new Set(userIds)];
-    
-    // Get user information
-    const userRecords = await db.select({
-      id: users.id,
-      username: users.username,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      profilePicture: users.profilePicture,
-      isArtisan: users.isArtisan
-    })
-    .from(users)
-    .where(inArray(users.id, uniqueUserIds));
-    
-    // Create a map of user info by user ID
-    const userMap = userRecords.reduce((map, user) => {
-      map[user.id] = user;
-      return map;
-    }, {});
-    
-    // Add author info to post and replies
-    const postWithAuthor = {
-      ...post,
-      author: userMap[post.userId] || { username: "Unknown" }
-    };
-    
-    const repliesWithAuthors = replies.map(reply => ({
-      ...reply,
-      author: userMap[reply.userId] || { username: "Unknown" }
-    }));
-    
     return successResponse(res, 200, {
-      post: postWithAuthor,
-      replies: repliesWithAuthors
+      post,
+      replies
     });
   } catch (error) {
     console.error("Failed to fetch forum post:", error);
@@ -101,13 +59,13 @@ app.get('/api/forum/posts/:id', async (req, res) => {
 });
 
 // Create a forum post (for authenticated users only)
-app.post('/api/forum/posts', isAuthenticated, async (req, res) => {
+router.post('/posts', isAuthenticated, async (req, res) => {
   try {
     const postData = createPostSchema.parse(req.body);
     
     const post = await storage.createForumPost({
       ...postData,
-      userId: req.user.id // Associate post with the creator
+      userId: req.user.id
     });
     
     return successResponse(res, 201, post);
@@ -121,7 +79,7 @@ app.post('/api/forum/posts', isAuthenticated, async (req, res) => {
 });
 
 // Create a forum reply (for authenticated users only)
-app.post('/api/forum/replies', isAuthenticated, async (req, res) => {
+router.post('/replies', isAuthenticated, async (req, res) => {
   try {
     const replyData = createReplySchema.parse(req.body);
     
@@ -133,7 +91,7 @@ app.post('/api/forum/replies', isAuthenticated, async (req, res) => {
     
     const reply = await storage.createForumReply({
       ...replyData,
-      userId: req.user.id // Associate reply with the creator
+      userId: req.user.id
     });
     
     return successResponse(res, 201, reply);
@@ -146,4 +104,4 @@ app.post('/api/forum/replies', isAuthenticated, async (req, res) => {
   }
 });
 
-export default app;
+export default router;
