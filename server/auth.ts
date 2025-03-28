@@ -1,7 +1,7 @@
 import { Express, Request, Response, NextFunction } from "express";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { storage } from "./storage";
 import { 
   User as SelectUser,
@@ -57,10 +57,9 @@ function generateToken(user: SelectUser): string {
     email: user.email
   };
   
-  // Cast the secret to a string type that jwt.sign accepts
-  const secret = String(JWT_SECRET);
-  
-  return jwt.sign(payload, secret, { expiresIn: JWT_EXPIRES_IN });
+  // Use a simple string as the secret
+  const options: SignOptions = { expiresIn: JWT_EXPIRES_IN };
+  return jwt.sign(payload, String(JWT_SECRET), options);
 }
 
 // Authentication middleware
@@ -70,10 +69,8 @@ function authenticateJWT(req: Request, res: Response, next: NextFunction) {
   if (authHeader) {
     const token = authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
     
-    // Cast the secret to a string type that jwt.verify accepts
-    const secret = String(JWT_SECRET);
-    
-    jwt.verify(token, secret, async (err, payload) => {
+    // Use a simple string as the secret
+    jwt.verify(token, String(JWT_SECRET), async (err, payload) => {
       if (err) {
         return res.sendStatus(403);
       }
