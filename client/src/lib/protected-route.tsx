@@ -1,6 +1,7 @@
-import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { User as SelectUser } from "@shared/schema";
 
 export function ProtectedRoute({
   path,
@@ -9,7 +10,21 @@ export function ProtectedRoute({
   path: string;
   component: React.FC;
 }) {
-  const { user, isLoading } = useAuth();
+  // Direct query to get user info
+  const { data: user, isLoading } = useQuery<SelectUser | null>({
+    queryKey: ["/api/user"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/user");
+        if (res.status === 401) return null;
+        if (!res.ok) throw new Error("Failed to fetch user");
+        return await res.json();
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+      }
+    }
+  });
 
   if (isLoading) {
     return (
