@@ -1,10 +1,17 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import forumRoutes from '../api/forum/index.mjs';
+import artisanRoutes from '../api/artisans/index.mjs';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// API Routes
+app.use('/api/forum', forumRoutes);
+app.use('/api/artisans', artisanRoutes);
 
 app.use((req, res, next) => {
   const start = Date.now();

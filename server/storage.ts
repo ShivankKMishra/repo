@@ -283,7 +283,128 @@ export class MemStorage implements IStorage {
   }
 }
 
-
-
 // Use in-memory storage for now due to MongoDB connection issues
 export const storage = new MemStorage();
+
+// In-memory storage for development
+let storage: Record<string, any> = {
+  forumPosts: [],
+  forumReplies: [],
+  artisans: [],
+  users: []
+};
+
+// Initialize storage from localStorage if available
+if (typeof window !== 'undefined') {
+  try {
+    const savedData = localStorage.getItem('artisan_marketplace');
+    if (savedData) {
+      storage = JSON.parse(savedData);
+    }
+  } catch (error) {
+    console.error('Error loading from localStorage:', error);
+  }
+}
+
+// Save to localStorage whenever data changes
+const saveToStorage = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('artisan_marketplace', JSON.stringify(storage));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }
+};
+
+// Forum Posts
+export const getForumPosts = async (limit?: number) => {
+  let posts = storage.forumPosts || [];
+  if (limit) {
+    posts = posts.slice(0, limit);
+  }
+  return posts;
+};
+
+export const getForumPost = async (id: number) => {
+  const posts = storage.forumPosts || [];
+  return posts.find((post: any) => post.id === id);
+};
+
+export const createForumPost = async (data: any) => {
+  const posts = storage.forumPosts || [];
+  const newPost = {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    ...data
+  };
+  posts.push(newPost);
+  storage.forumPosts = posts;
+  saveToStorage();
+  return newPost;
+};
+
+// Forum Replies
+export const getForumReplies = async (postId: number) => {
+  const replies = storage.forumReplies || [];
+  return replies.filter((reply: any) => reply.postId === postId);
+};
+
+export const createForumReply = async (data: any) => {
+  const replies = storage.forumReplies || [];
+  const newReply = {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    ...data
+  };
+  replies.push(newReply);
+  storage.forumReplies = replies;
+  saveToStorage();
+  return newReply;
+};
+
+// Artisans
+export const getArtisans = async () => {
+  return storage.artisans || [];
+};
+
+export const getArtisan = async (id: number) => {
+  const artisans = storage.artisans || [];
+  return artisans.find((artisan: any) => artisan.id === id);
+};
+
+export const createArtisan = async (data: any) => {
+  const artisans = storage.artisans || [];
+  const newArtisan = {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    ...data
+  };
+  artisans.push(newArtisan);
+  storage.artisans = artisans;
+  saveToStorage();
+  return newArtisan;
+};
+
+// Users
+export const getUsers = async () => {
+  return storage.users || [];
+};
+
+export const getUser = async (id: number) => {
+  const users = storage.users || [];
+  return users.find((user: any) => user.id === id);
+};
+
+export const createUser = async (data: any) => {
+  const users = storage.users || [];
+  const newUser = {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    ...data
+  };
+  users.push(newUser);
+  storage.users = users;
+  saveToStorage();
+  return newUser;
+};
