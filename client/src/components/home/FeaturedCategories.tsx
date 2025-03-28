@@ -13,7 +13,7 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
     <Link href={`/categories/${category.id}`}>
       <div className="group relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition cursor-pointer">
         <img 
-          src={category.imageUrl} 
+          src={category.imageUrl ?? 'https://images.unsplash.com/photo-1587385789097-0197a7fbd179'} 
           alt={category.name} 
           className="w-full h-48 object-cover group-hover:scale-105 transition duration-300" 
         />
@@ -64,11 +64,9 @@ export default function FeaturedCategories() {
         </div>
         
         <div className="text-center mt-8">
-          <Link href="/categories">
-            <a className="text-teal font-medium hover:text-terracotta transition inline-flex items-center">
-              View All Categories
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </a>
+          <Link href="/categories" className="text-teal font-medium hover:text-terracotta transition inline-flex items-center">
+            View All Categories
+            <ChevronRight className="ml-2 h-4 w-4" />
           </Link>
         </div>
       </div>

@@ -52,7 +52,7 @@ const EventCard = ({ event }: EventCardProps) => {
               {event.organizer}
             </p>
           )}
-          {event.price !== undefined && event.price > 0 ? (
+          {event.price ? (
             <p className="flex items-center text-sm">
               <IndianRupee className="text-terracotta w-5 h-5 mr-2" />
               ₹{event.price.toLocaleString('en-IN')} {event.eventType === 'workshop' ? 'per person' : ''}
@@ -66,10 +66,8 @@ const EventCard = ({ event }: EventCardProps) => {
         </div>
         
         <div className="mt-4">
-          <Link href={`/events/${event.id}`}>
-            <a className="block text-center bg-terracotta text-white font-medium py-2 rounded-md hover:bg-amber transition duration-300">
-              {event.eventType === 'workshop' ? 'Book Your Spot' : 'Register to Attend'}
-            </a>
+          <Link href={`/events/${event.id}`} className="block text-center bg-terracotta text-white font-medium py-2 rounded-md hover:bg-amber transition duration-300">
+            {event.eventType === 'workshop' ? 'Book Your Spot' : 'Register to Attend'}
           </Link>
         </div>
       </div>
@@ -105,8 +103,8 @@ export default function UpcomingEvents() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <h2 className="font-playfair text-3xl font-bold text-warmGray">Upcoming Events</h2>
-          <Link href="/events">
-            <a className="text-teal font-medium hover:text-terracotta transition">View All Events</a>
+          <Link href="/events" className="text-teal font-medium hover:text-terracotta transition">
+            View All Events
           </Link>
         </div>
         

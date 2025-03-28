@@ -76,11 +76,11 @@ const ArtisanCard = ({ artisan }: ArtisanCardProps) => {
         </div>
         
         <div className="mt-5 flex justify-between">
-          <Link href={`/artisans/${artisan.id}`}>
-            <a className="text-teal font-medium hover:text-terracotta transition">View Profile</a>
+          <Link href={`/artisans/${artisan.id}`} className="text-teal font-medium hover:text-terracotta transition">
+            View Profile
           </Link>
-          <Link href={`/products/artisan/${artisan.id}`}>
-            <a className="text-teal font-medium hover:text-terracotta transition">Shop Crafts</a>
+          <Link href={`/products/artisan/${artisan.id}`} className="text-teal font-medium hover:text-terracotta transition">
+            Shop Crafts
           </Link>
         </div>
       </div>
@@ -123,8 +123,8 @@ export default function FeaturedArtisans() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <h2 className="font-playfair text-3xl font-bold text-warmGray">Featured Artisans</h2>
-          <Link href="/artisans">
-            <a className="text-teal font-medium hover:text-terracotta transition">View All</a>
+          <Link href="/artisans" className="text-teal font-medium hover:text-terracotta transition">
+            View All
           </Link>
         </div>
         

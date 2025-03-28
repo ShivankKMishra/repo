@@ -90,8 +90,8 @@ export default function FeaturedProducts() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <h2 className="font-playfair text-3xl font-bold text-warmGray">Handcrafted Treasures</h2>
-          <Link href="/products">
-            <a className="text-teal font-medium hover:text-terracotta transition">View All Products</a>
+          <Link href="/products" className="text-teal font-medium hover:text-terracotta transition">
+            View All Products
           </Link>
         </div>
         
